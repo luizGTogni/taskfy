@@ -1,0 +1,83 @@
+.titleInput {
+  font-size: 20px;
+  font-weight: 700;
+  border: none;
+  background: transparent;
+  width: 100%;
+  padding: 0;
+}
+
+.titleInput:focus {
+  outline: none;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-2);
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+}
+
+.details {
+  width: 100%;
+  min-height: 80px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-3);
+  background: var(--color-bg);
+  font-size: 14px;
+  resize: vertical;
+}
+
+.stats {
+  display: flex;
+  gap: var(--space-5);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.statValue {
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.statLabel {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+.heatmap {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+  margin-top: var(--space-2);
+}
+
+.heatCell {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-border);
+}
+
+.heatCellDone {
+  background: var(--color-accent);
+}
+
+.footer {
+  display: flex;
+  gap: var(--space-2);
+  margin-top: auto;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border);
+}
