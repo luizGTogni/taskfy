@@ -1,6 +1,8 @@
 import type { Task, Completion, DayKey } from '../../domain/types';
 import { Checkbox } from '../../ui/Checkbox';
 import { Chip } from '../../ui/Chip';
+import { DragHandle } from '../../ui/DragHandle';
+import type { DragHandleProps } from '../../ui/SortableList';
 import { currentStreak } from '../../domain/streak';
 import { isTaskDone, findCompletion } from '../../domain/completions';
 import { weekdayLabel, formatDayKey } from '../../domain/dates';
@@ -12,6 +14,7 @@ interface TaskRowProps {
   completions: Completion[];
   onToggle: () => void;
   onOpen: () => void;
+  drag: DragHandleProps;
 }
 
 function scheduleLabel(task: Task): string | null {
@@ -27,7 +30,7 @@ function scheduleLabel(task: Task): string | null {
   }
 }
 
-export function TaskRow({ task, day, completions, onToggle, onOpen }: TaskRowProps) {
+export function TaskRow({ task, day, completions, onToggle, onOpen, drag }: TaskRowProps) {
   const done = isTaskDone(task.id, day, completions);
   const streak = currentStreak(task, completions, day);
   const label = scheduleLabel(task);
@@ -36,6 +39,7 @@ export function TaskRow({ task, day, completions, onToggle, onOpen }: TaskRowPro
 
   return (
     <div className={`${styles.row} ${done ? styles.done : ''}`} onClick={onOpen}>
+      <DragHandle {...drag} />
       <Checkbox checked={done} onChange={onToggle} aria-label={`Concluir ${task.title}`} />
       <div className={styles.body}>
         <span className={styles.title}>{task.title}</span>

@@ -19,6 +19,8 @@ export function GroupDetail({ groupId }: GroupDetailProps) {
   const openGroup = useAppStore((s) => s.openGroup);
   const updateGroup = useAppStore((s) => s.updateGroup);
   const deleteGroup = useAppStore((s) => s.deleteGroup);
+  const duplicateGroup = useAppStore((s) => s.duplicateGroup);
+  const archiveGroup = useAppStore((s) => s.archiveGroup);
 
   const [title, setTitle] = useState(group?.title ?? '');
   const [description, setDescription] = useState(group?.description ?? '');
@@ -53,6 +55,24 @@ export function GroupDetail({ groupId }: GroupDetailProps) {
           />
         </div>
         <div className={styles.headerActions}>
+          <Button
+            variant="ghost"
+            onClick={async () => {
+              const copy = await duplicateGroup(group.id);
+              openGroup(copy.id);
+            }}
+          >
+            Duplicar
+          </Button>
+          <Button
+            variant="ghost"
+            onClick={() => {
+              archiveGroup(group.id);
+              openGroup(null);
+            }}
+          >
+            Arquivar
+          </Button>
           <Button
             variant="danger"
             onClick={() => {

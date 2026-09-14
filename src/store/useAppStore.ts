@@ -27,6 +27,10 @@ interface AppState {
   createGroup: (title: string, description: string, emoji?: string) => Promise<Group>;
   updateGroup: (id: string, patch: Partial<Pick<Group, 'title' | 'description' | 'emoji'>>) => Promise<void>;
   deleteGroup: (id: string) => Promise<void>;
+  duplicateGroup: (id: string) => Promise<Group>;
+  archiveGroup: (id: string) => Promise<void>;
+  unarchiveGroup: (id: string) => Promise<void>;
+  reorderGroups: (orderedIds: string[]) => Promise<void>;
 
   createTask: (groupId: string, title: string) => Promise<Task>;
   updateTask: (
@@ -34,6 +38,7 @@ interface AppState {
     patch: Partial<Pick<Task, 'title' | 'details' | 'schedule' | 'checklist'>>,
   ) => Promise<void>;
   deleteTask: (id: string) => Promise<void>;
+  reorderTasks: (orderedIds: string[]) => Promise<void>;
 
   toggleCompletion: (taskId: string, date: DayKey) => Promise<void>;
   toggleChecklistItem: (taskId: string, date: DayKey, itemId: string) => Promise<void>;
@@ -135,6 +140,73 @@ export const useAppStore = create<AppState>((set, get) => ({
     }));
   },
 
+  duplicateGroup: async (id) => {
+    const userId = currentUserId(get);
+    const source = get().groups.find((g) => g.id === id);
+    if (!source) throw new Error('Grupo não encontrado');
+
+    const visibleCount = get().groups.filter((g) => !g.archivedAt).length;
+    const newGroup: Group = {
+      ...source,
+      id: crypto.randomUUID(),
+      title: `${source.title} (cópia)`,
+      order: visibleCount,
+      createdAt: new Date().toISOString(),
+      archivedAt: undefined,
+    };
+    const sourceTasks = get().tasks.filter((t) => t.groupId === id && !t.archivedAt);
+    const newTasks: Task[] = sourceTasks.map((t) => ({
+      ...t,
+      id: crypto.randomUUID(),
+      groupId: newGroup.id,
+      checklist: t.checklist.map((item) => ({ ...item, id: crypto.randomUUID() })),
+      createdAt: new Date().toISOString(),
+    }));
+
+    await repo.saveGroup(userId, newGroup);
+    await Promise.all(newTasks.map((t) => repo.saveTask(userId, t)));
+
+    set((state) => ({ groups: [...state.groups, newGroup], tasks: [...state.tasks, ...newTasks] }));
+    return newGroup;
+  },
+
+  archiveGroup: async (id) => {
+    const userId = currentUserId(get);
+    const group = get().groups.find((g) => g.id === id);
+    if (!group) return;
+    const next = { ...group, archivedAt: new Date().toISOString() };
+    await repo.saveGroup(userId, next);
+    set((state) => ({
+      groups: state.groups.map((g) => (g.id === id ? next : g)),
+      openGroupId: state.openGroupId === id ? null : state.openGroupId,
+    }));
+  },
+
+  unarchiveGroup: async (id) => {
+    const userId = currentUserId(get);
+    const group = get().groups.find((g) => g.id === id);
+    if (!group) return;
+    const next = { ...group, archivedAt: undefined };
+    await repo.saveGroup(userId, next);
+    set((state) => ({ groups: state.groups.map((g) => (g.id === id ? next : g)) }));
+  },
+
+  reorderGroups: async (orderedIds) => {
+    const userId = currentUserId(get);
+    const byId = new Map(get().groups.map((g) => [g.id, g]));
+    const updated = orderedIds
+      .map((id, index) => {
+        const group = byId.get(id);
+        return group ? { ...group, order: index } : null;
+      })
+      .filter((g): g is Group => g !== null);
+
+    set((state) => ({
+      groups: state.groups.map((g) => updated.find((u) => u.id === g.id) ?? g),
+    }));
+    await Promise.all(updated.map((g) => repo.saveGroup(userId, g)));
+  },
+
   createTask: async (groupId, title) => {
     const userId = currentUserId(get);
     const siblingCount = get().tasks.filter((t) => t.groupId === groupId).length;
@@ -170,6 +242,24 @@ export const useAppStore = create<AppState>((set, get) => ({
       completions: state.completions.filter((c) => c.taskId !== id),
       openTaskId: state.openTaskId === id ? null : state.openTaskId,
     }));
+  },
+
+  // Reordena apenas os ids informados (tipicamente as tarefas de uma seção — Hoje,
+  // Agendadas etc.) sem afetar a ordem de tarefas de outras seções/grupos.
+  reorderTasks: async (orderedIds) => {
+    const userId = currentUserId(get);
+    const byId = new Map(get().tasks.map((t) => [t.id, t]));
+    const updated = orderedIds
+      .map((id, index) => {
+        const task = byId.get(id);
+        return task ? { ...task, order: index } : null;
+      })
+      .filter((t): t is Task => t !== null);
+
+    set((state) => ({
+      tasks: state.tasks.map((t) => updated.find((u) => u.id === t.id) ?? t),
+    }));
+    await Promise.all(updated.map((t) => repo.saveTask(userId, t)));
   },
 
   toggleCompletion: async (taskId, date) => {

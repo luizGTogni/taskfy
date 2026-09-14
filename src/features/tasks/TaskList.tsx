@@ -5,6 +5,7 @@ import type { Task } from '../../domain/types';
 import { isDueOn, isUndated, isScheduledFuture } from '../../domain/schedule';
 import { isTaskDone } from '../../domain/completions';
 import { TaskRow } from './TaskRow';
+import { SortableList } from '../../ui/SortableList';
 import styles from './TaskList.module.css';
 
 interface TaskListProps {
@@ -21,13 +22,17 @@ export function TaskList({ groupId }: TaskListProps) {
   const toggleCompletion = useAppStore((s) => s.toggleCompletion);
   const openTask = useAppStore((s) => s.openTask);
   const createTask = useAppStore((s) => s.createTask);
+  const reorderTasks = useAppStore((s) => s.reorderTasks);
 
   const isDone = (t: Task) => isTaskDone(t.id, day, completions);
+  const byOrder = (a: Task, b: Task) => a.order - b.order;
 
-  const dueToday = tasks.filter((t) => isDueOn(t, day, completions) && !isDone(t));
-  const doneToday = tasks.filter((t) => isDueOn(t, day, completions) && isDone(t));
-  const scheduled = tasks.filter((t) => isScheduledFuture(t, day));
-  const undated = tasks.filter((t) => isUndated(t) && !dueToday.includes(t) && !doneToday.includes(t) && !scheduled.includes(t));
+  const dueToday = tasks.filter((t) => isDueOn(t, day, completions) && !isDone(t)).sort(byOrder);
+  const doneToday = tasks.filter((t) => isDueOn(t, day, completions) && isDone(t)).sort(byOrder);
+  const scheduled = tasks.filter((t) => isScheduledFuture(t, day)).sort(byOrder);
+  const undated = tasks
+    .filter((t) => isUndated(t) && !dueToday.includes(t) && !doneToday.includes(t) && !scheduled.includes(t))
+    .sort(byOrder);
 
   function submitNew() {
     if (!newTitle.trim()) return;
@@ -41,16 +46,21 @@ export function TaskList({ groupId }: TaskListProps) {
       <div className={styles.section}>
         <p className={styles.sectionTitle}>{label}</p>
         <div className={styles.rows}>
-          {list.map((task) => (
-            <TaskRow
-              key={task.id}
-              task={task}
-              day={day}
-              completions={completions}
-              onToggle={() => toggleCompletion(task.id, day)}
-              onOpen={() => openTask(task.id)}
-            />
-          ))}
+          <SortableList
+            items={list}
+            getId={(task) => task.id}
+            onReorder={reorderTasks}
+            renderItem={(task, drag) => (
+              <TaskRow
+                task={task}
+                day={day}
+                completions={completions}
+                onToggle={() => toggleCompletion(task.id, day)}
+                onOpen={() => openTask(task.id)}
+                drag={drag}
+              />
+            )}
+          />
         </div>
       </div>
     );

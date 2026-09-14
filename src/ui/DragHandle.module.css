@@ -1,0 +1,16 @@
+.handle {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: grab;
+  padding: var(--space-1);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  flex-shrink: 0;
+}
+
+.handle:active {
+  cursor: grabbing;
+}
