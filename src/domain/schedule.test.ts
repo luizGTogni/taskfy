@@ -41,7 +41,7 @@ describe('isDueOn', () => {
     const task = makeTask({ schedule: { kind: 'once' } });
     expect(isDueOn(task, '2026-09-13', [])).toBe(true);
     const completions = [
-      { id: 't1:2026-09-13', taskId: 't1', date: '2026-09-13', done: true, completedAt: '', checkedItems: [] },
+      { id: 't1:2026-09-13', taskId: 't1', date: '2026-09-13', done: true, completedAt: '', checkedItems: [], frozen: false },
     ];
     expect(isDueOn(task, '2026-09-14', completions)).toBe(false);
   });

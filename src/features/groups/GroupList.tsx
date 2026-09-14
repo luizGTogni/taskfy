@@ -1,18 +1,27 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { useAuthStore } from '../../store/useAuthStore';
 import { useShallow } from 'zustand/react/shallow';
-import { groupProgressFor } from '../../domain/progress';
+import { groupProgressFor, tasksDueOn } from '../../domain/progress';
+import { isTaskDone } from '../../domain/completions';
+import { freezesRemaining } from '../../domain/streakFreeze';
+import { todayKey } from '../../domain/dates';
 import { GroupCard } from './GroupCard';
 import { GroupForm } from './GroupForm';
 import { Button } from '../../ui/Button';
 import { DayNav } from '../../ui/DayNav';
 import { SortableList } from '../../ui/SortableList';
+import { Confetti } from '../../ui/Confetti';
 import styles from './GroupList.module.css';
+
+function celebratedKey(userId: string, day: string): string {
+  return `taskfy:celebrated:${userId}:${day}`;
+}
 
 export function GroupList() {
   const [showForm, setShowForm] = useState(false);
   const [showArchived, setShowArchived] = useState(false);
+  const [celebrating, setCelebrating] = useState(false);
   const groups = useAppStore(
     useShallow((s) => s.groups.filter((g) => !g.archivedAt).sort((a, b) => a.order - b.order)),
   );
@@ -27,7 +36,28 @@ export function GroupList() {
   const reorderGroups = useAppStore((s) => s.reorderGroups);
   const unarchiveGroup = useAppStore((s) => s.unarchiveGroup);
   const email = useAuthStore((s) => s.email);
+  const userId = useAuthStore((s) => s.userId);
   const signOut = useAuthStore((s) => s.signOut);
+
+  const dueToday = tasksDueOn(tasks, selectedDay, completions);
+  const doneToday = dueToday.filter((t) => isTaskDone(t.id, selectedDay, completions)).length;
+  const allDoneToday = dueToday.length > 0 && doneToday === dueToday.length;
+  const remainingFreezes = freezesRemaining(completions, todayKey());
+
+  // Celebra a primeira vez, no dia, em que todas as tarefas devidas de hoje ficam concluídas.
+  useEffect(() => {
+    if (!userId || selectedDay !== todayKey() || !allDoneToday) return;
+    const key = celebratedKey(userId, selectedDay);
+    try {
+      if (localStorage.getItem(key)) return;
+      localStorage.setItem(key, '1');
+    } catch {
+      // localStorage indisponível (modo privado etc.) — celebra mesmo assim, só não persiste
+    }
+    setCelebrating(true);
+    const timer = setTimeout(() => setCelebrating(false), 3000);
+    return () => clearTimeout(timer);
+  }, [allDoneToday, selectedDay, userId]);
 
   return (
     <div>
@@ -38,11 +68,18 @@ export function GroupList() {
         </Button>
       </div>
 
+      {celebrating && <Confetti message="🎉 Você concluiu todas as tarefas de hoje!" />}
+
       <div className={styles.account}>
         <span>{email}</span>
-        <button className={styles.signOutBtn} onClick={() => signOut()}>
-          Sair
-        </button>
+        <div className={styles.accountRight}>
+          <span className={styles.freezeBadge} title="Freezes de streak restantes este mês">
+            🧊 {remainingFreezes}
+          </span>
+          <button className={styles.signOutBtn} onClick={() => signOut()}>
+            Sair
+          </button>
+        </div>
       </div>
 
       <DayNav day={selectedDay} onShift={shiftDay} onToday={goToday} />

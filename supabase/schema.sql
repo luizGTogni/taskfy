@@ -32,7 +32,9 @@ create table if not exists completions (
   date date not null,
   done boolean not null default false,
   completed_at timestamptz,
-  checked_items jsonb not null default '[]'
+  checked_items jsonb not null default '[]',
+  -- dia protegido por um "freeze" de streak (não concluído, mas a sequência não quebra)
+  frozen boolean not null default false
 );
 
 create index if not exists tasks_group_id_idx on tasks(group_id);

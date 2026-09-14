@@ -39,6 +39,13 @@ Vitest (testes de domínio).
 Cada pessoa que se cadastrar (email + senha) começa com uma conta vazia, com seus
 próprios grupos e tarefas privados.
 
+### Atualizando um banco já existente
+
+Se você já rodou o `schema.sql` antes de uma mudança que adiciona colunas/tabelas,
+rode os arquivos em [supabase/migrations/](supabase/migrations/), em ordem, no SQL
+Editor. Eles são idempotentes (podem ser rodados mais de uma vez sem problema). Um
+projeto novo não precisa disso — o `schema.sql` já vem atualizado.
+
 ## Scripts
 
 - `npm run dev` — servidor de desenvolvimento

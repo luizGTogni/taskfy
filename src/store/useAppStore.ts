@@ -3,6 +3,12 @@ import type { Group, Task, Completion, ChecklistItem, DayKey } from '../domain/t
 import * as repo from '../data/repository';
 import { todayKey, addDays } from '../domain/dates';
 import { isTaskDone, findCompletion } from '../domain/completions';
+import { findFreezeCandidates, freezesRemaining } from '../domain/streakFreeze';
+
+export interface AppNotification {
+  id: string;
+  message: string;
+}
 
 interface AppState {
   loaded: boolean;
@@ -13,9 +19,12 @@ interface AppState {
   selectedDay: DayKey;
   openGroupId: string | null;
   openTaskId: string | null;
+  notifications: AppNotification[];
 
   loadAll: (userId: string) => Promise<void>;
   reset: () => void;
+  applyStreakFreezes: () => Promise<void>;
+  dismissNotification: (id: string) => void;
 
   setSelectedDay: (day: DayKey) => void;
   goToday: () => void;
@@ -76,6 +85,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedDay: todayKey(),
   openGroupId: null,
   openTaskId: null,
+  notifications: [],
 
   loadAll: (userId) => {
     if (loadPromiseUserId !== userId) {
@@ -96,8 +106,41 @@ export const useAppStore = create<AppState>((set, get) => ({
       completions: [],
       openGroupId: null,
       openTaskId: null,
+      notifications: [],
     });
   },
+
+  // Protege automaticamente sequências que teriam quebrado ontem, gastando a cota
+  // mensal de freezes disponível (estilo Duolingo). Idempotente: um dia já
+  // protegido não é reprocessado.
+  applyStreakFreezes: async () => {
+    const userId = currentUserId(get);
+    const { tasks, completions } = get();
+    const today = todayKey();
+    const candidates = findFreezeCandidates(tasks, completions, today);
+    let remaining = freezesRemaining(completions, today);
+    if (candidates.length === 0 || remaining <= 0) return;
+
+    const applied: Completion[] = [];
+    for (const candidate of candidates) {
+      if (remaining <= 0) break;
+      const updated = await repo.setFreeze(userId, candidate.taskId, candidate.date);
+      applied.push(updated);
+      remaining--;
+    }
+    if (applied.length === 0) return;
+
+    const notifications: AppNotification[] = candidates
+      .slice(0, applied.length)
+      .map((c) => ({ id: crypto.randomUUID(), message: `🧊 Usamos um freeze para proteger a sequência de "${c.taskTitle}"` }));
+
+    set((state) => ({
+      completions: [...state.completions.filter((c) => !applied.some((a) => a.id === c.id)), ...applied],
+      notifications: [...state.notifications, ...notifications],
+    }));
+  },
+
+  dismissNotification: (id) => set((state) => ({ notifications: state.notifications.filter((n) => n.id !== id) })),
 
   setSelectedDay: (day) => set({ selectedDay: day }),
   goToday: () => set({ selectedDay: todayKey() }),

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button } from '../../ui/Button';
+import { EmojiPicker } from '../../ui/EmojiPicker';
 import styles from './GroupForm.module.css';
 
 interface GroupFormProps {
@@ -10,23 +11,17 @@ interface GroupFormProps {
 export function GroupForm({ onSubmit, onCancel }: GroupFormProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [emoji, setEmoji] = useState('');
+  const [emoji, setEmoji] = useState<string | undefined>(undefined);
 
   function submit() {
     if (!title.trim()) return;
-    onSubmit(title.trim(), description.trim(), emoji.trim() || undefined);
+    onSubmit(title.trim(), description.trim(), emoji);
   }
 
   return (
     <div className={styles.form}>
       <div className={styles.row}>
-        <input
-          className={`${styles.input} ${styles.emojiInput}`}
-          placeholder="🎯"
-          value={emoji}
-          onChange={(e) => setEmoji(e.target.value)}
-          maxLength={2}
-        />
+        <EmojiPicker value={emoji} onChange={setEmoji} />
         <input
           className={styles.input}
           placeholder="Nome do grupo"

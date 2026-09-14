@@ -17,7 +17,15 @@ function makeTask(overrides: Partial<Task>): Task {
 }
 
 function completion(taskId: string, date: string): Completion {
-  return { id: `${taskId}:${date}`, taskId, date, done: true, completedAt: `${date}T10:00:00.000Z`, checkedItems: [] };
+  return {
+    id: `${taskId}:${date}`,
+    taskId,
+    date,
+    done: true,
+    completedAt: `${date}T10:00:00.000Z`,
+    checkedItems: [],
+    frozen: false,
+  };
 }
 
 describe('currentStreak', () => {

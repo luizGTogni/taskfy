@@ -93,6 +93,7 @@ interface CompletionRow {
   done: boolean;
   completed_at: string | null;
   checked_items: string[];
+  frozen: boolean;
 }
 
 function completionFromRow(row: CompletionRow): Completion {
@@ -103,6 +104,7 @@ function completionFromRow(row: CompletionRow): Completion {
     done: row.done,
     completedAt: row.completed_at ?? undefined,
     checkedItems: row.checked_items,
+    frozen: row.frozen,
   };
 }
 
@@ -212,9 +214,10 @@ export async function setCompletion(userId: string, taskId: string, date: DayKey
     done,
     completed_at: done ? new Date().toISOString() : (existing?.completed_at ?? null),
     checked_items: existing?.checked_items ?? [],
+    frozen: existing?.frozen ?? false,
   };
 
-  if (!done && next.checked_items.length === 0) {
+  if (!done && !next.frozen && next.checked_items.length === 0) {
     // nada a preservar: remove a linha em vez de deixar um registro vazio
     const { error } = await supabase.from('completions').delete().eq('id', id).eq('user_id', userId);
     if (error) throw error;
@@ -250,6 +253,31 @@ export async function setCheckedItem(
     done: existing?.done ?? false,
     completed_at: existing?.completed_at ?? null,
     checked_items: [...checkedItems],
+    frozen: existing?.frozen ?? false,
+  };
+
+  const { error } = await supabase.from('completions').upsert(next);
+  if (error) throw error;
+  return completionFromRow(next);
+}
+
+/**
+ * Aplica um freeze de streak num dia perdido: protege a sequência sem marcar a
+ * tarefa como concluída. Não decide a cota — quem chama já verificou disponibilidade.
+ */
+export async function setFreeze(userId: string, taskId: string, date: DayKey): Promise<Completion> {
+  const id = completionId(taskId, date);
+  const existing = await getCompletionRow(userId, id);
+
+  const next: CompletionRow = {
+    id,
+    user_id: userId,
+    task_id: taskId,
+    date,
+    done: existing?.done ?? false,
+    completed_at: existing?.completed_at ?? null,
+    checked_items: existing?.checked_items ?? [],
+    frozen: true,
   };
 
   const { error } = await supabase.from('completions').upsert(next);

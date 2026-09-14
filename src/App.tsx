@@ -4,6 +4,8 @@ import { useAuthStore } from './store/useAuthStore';
 import { AuthScreen } from './features/auth/AuthScreen';
 import { GroupList } from './features/groups/GroupList';
 import { GroupDetail } from './features/groups/GroupDetail';
+import { NotificationToasts } from './ui/NotificationToasts';
+import { ContextMenuOverlay } from './ui/ContextMenu';
 
 export default function App() {
   const authStatus = useAuthStore((s) => s.status);
@@ -13,6 +15,7 @@ export default function App() {
   const loaded = useAppStore((s) => s.loaded);
   const loadAll = useAppStore((s) => s.loadAll);
   const resetApp = useAppStore((s) => s.reset);
+  const applyStreakFreezes = useAppStore((s) => s.applyStreakFreezes);
   const openGroupId = useAppStore((s) => s.openGroupId);
 
   useEffect(() => {
@@ -20,9 +23,11 @@ export default function App() {
   }, [initAuth]);
 
   useEffect(() => {
-    if (authStatus === 'signedIn' && userId) loadAll(userId);
+    if (authStatus === 'signedIn' && userId) {
+      loadAll(userId).then(() => applyStreakFreezes());
+    }
     if (authStatus === 'signedOut') resetApp();
-  }, [authStatus, userId, loadAll, resetApp]);
+  }, [authStatus, userId, loadAll, resetApp, applyStreakFreezes]);
 
   if (authStatus === 'loading') {
     return <div className="app-shell">Carregando…</div>;
@@ -40,5 +45,11 @@ export default function App() {
     return <div className="app-shell">Carregando seus grupos…</div>;
   }
 
-  return <div className="app-shell">{openGroupId ? <GroupDetail groupId={openGroupId} /> : <GroupList />}</div>;
+  return (
+    <div className="app-shell">
+      {openGroupId ? <GroupDetail groupId={openGroupId} /> : <GroupList />}
+      <NotificationToasts />
+      <ContextMenuOverlay />
+    </div>
+  );
 }

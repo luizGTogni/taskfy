@@ -85,3 +85,18 @@
   cursor: pointer;
   font-size: 12px;
 }
+
+.accountRight {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.freezeBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-chip-text);
+  background: var(--color-chip-bg);
+  padding: 2px 8px;
+  border-radius: 999px;
+}

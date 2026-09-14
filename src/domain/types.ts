@@ -42,4 +42,9 @@ export interface Completion {
   completedAt?: string;
   /** Estado do checklist nesse dia — independente de `done`. */
   checkedItems: string[];
+  /**
+   * O dia foi protegido por um "freeze" de streak (estilo Duolingo): a tarefa não
+   * foi concluída, mas a sequência não quebra. Independente de `done`.
+   */
+  frozen: boolean;
 }

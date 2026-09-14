@@ -22,11 +22,6 @@
   font-size: 14px;
 }
 
-.emojiInput {
-  width: 48px;
-  text-align: center;
-}
-
 .actions {
   display: flex;
   gap: var(--space-2);

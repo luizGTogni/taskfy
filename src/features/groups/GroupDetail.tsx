@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 import { DayNav } from '../../ui/DayNav';
 import { Button } from '../../ui/Button';
+import { EmojiPicker } from '../../ui/EmojiPicker';
 import { TaskList } from '../tasks/TaskList';
 import { TaskDetailPanel } from '../tasks/TaskDetailPanel';
 import styles from './GroupDetail.module.css';
@@ -45,7 +46,7 @@ export function GroupDetail({ groupId }: GroupDetailProps) {
 
       <div className={styles.header}>
         <div className={styles.titleRow} style={{ flex: 1 }}>
-          {group.emoji && <span className={styles.emoji}>{group.emoji}</span>}
+          <EmojiPicker value={group.emoji} onChange={(emoji) => updateGroup(group.id, { emoji })} />
           <input
             className={styles.titleInput}
             value={title}

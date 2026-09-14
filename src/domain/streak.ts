@@ -1,7 +1,7 @@
 import type { Task, Completion, DayKey } from './types';
 import { addDays, compareDayKeys } from './dates';
 import { isDueOn } from './schedule';
-import { isTaskDone } from './completions';
+import { isStreakCovered } from './completions';
 
 /**
  * Streak atual: caminha para trás a partir de `today`, contando apenas os dias em que a
@@ -18,8 +18,8 @@ export function currentStreak(task: Task, completions: Completion[], today: DayK
   while (guard < 3660) {
     guard++;
     if (isDueOn(task, day, completions)) {
-      const done = isTaskDone(task.id, day, completions);
-      if (done) {
+      const covered = isStreakCovered(task.id, day, completions);
+      if (covered) {
         streak++;
       } else if (first && day === today) {
         // hoje ainda não concluído: não conta, mas também não quebra
@@ -36,9 +36,9 @@ export function currentStreak(task: Task, completions: Completion[], today: DayK
 
 /** Maior streak já alcançado, varrendo o histórico de conclusões. */
 export function longestStreak(task: Task, completions: Completion[]): number {
-  const dates = [...new Set(completions.filter((c) => c.taskId === task.id && c.done).map((c) => c.date))].sort(
-    compareDayKeys,
-  );
+  const dates = [
+    ...new Set(completions.filter((c) => c.taskId === task.id && (c.done || c.frozen)).map((c) => c.date)),
+  ].sort(compareDayKeys);
   if (dates.length === 0) return 0;
 
   let best = 0;
