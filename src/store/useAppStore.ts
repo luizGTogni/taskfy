@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import type { Group, Task, Completion, ChecklistItem, DayKey } from '../domain/types';
 import * as repo from '../data/repository';
-import { buildSeedData } from '../data/seed';
 import { todayKey, addDays } from '../domain/dates';
 import { isTaskDone, findCompletion } from '../domain/completions';
 
@@ -43,25 +42,16 @@ interface AppState {
 }
 
 // Singleton por usuário: React 18 StrictMode invoca efeitos de montagem duas vezes em
-// dev, o que faria duas chamadas concorrentes verem o banco vazio e semear o grupo
-// "English" duplicado, cada uma com IDs de tarefa diferentes.
+// dev, o que faria duas chamadas concorrentes disputarem o carregamento inicial.
 let loadPromise: Promise<void> | null = null;
 let loadPromiseUserId: string | null = null;
 
 async function performLoad(userId: string, set: (partial: Partial<AppState>) => void): Promise<void> {
-  let [groups, tasks, completions] = await Promise.all([
+  const [groups, tasks, completions] = await Promise.all([
     repo.listGroups(userId),
     repo.listAllTasks(userId),
     repo.listAllCompletions(userId),
   ]);
-
-  if (groups.length === 0) {
-    const seed = buildSeedData();
-    await repo.saveGroup(userId, seed.group);
-    await Promise.all(seed.tasks.map((task) => repo.saveTask(userId, task)));
-    groups = [seed.group];
-    tasks = seed.tasks;
-  }
 
   set({ groups, tasks, completions, loaded: true, loadedForUserId: userId });
 }

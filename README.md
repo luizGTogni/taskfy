@@ -36,8 +36,8 @@ Vitest (testes de domínio).
    npm run dev
    ```
 
-Cada pessoa que se cadastrar (email + senha) ganha seus próprios grupos e tarefas,
-com o grupo "English" de exemplo semeado automaticamente no primeiro login.
+Cada pessoa que se cadastrar (email + senha) começa com uma conta vazia, com seus
+próprios grupos e tarefas privados.
 
 ## Scripts
 
