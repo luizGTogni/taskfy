@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { useAuthStore } from '../../store/useAuthStore';
 import { useShallow } from 'zustand/react/shallow';
 import { groupProgressFor } from '../../domain/progress';
 import { GroupCard } from './GroupCard';
@@ -18,6 +19,8 @@ export function GroupList() {
   const goToday = useAppStore((s) => s.goToday);
   const openGroup = useAppStore((s) => s.openGroup);
   const createGroup = useAppStore((s) => s.createGroup);
+  const email = useAuthStore((s) => s.email);
+  const signOut = useAuthStore((s) => s.signOut);
 
   return (
     <div>
@@ -26,6 +29,13 @@ export function GroupList() {
         <Button variant="primary" onClick={() => setShowForm((v) => !v)}>
           + Novo grupo
         </Button>
+      </div>
+
+      <div className={styles.account}>
+        <span>{email}</span>
+        <button className={styles.signOutBtn} onClick={() => signOut()}>
+          Sair
+        </button>
       </div>
 
       <DayNav day={selectedDay} onShift={shiftDay} onToday={goToday} />

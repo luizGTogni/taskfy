@@ -1,32 +1,47 @@
-# React + TypeScript + Vite
+# Taskfy
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Gerenciador de tarefas por grupos. Crie grupos temáticos (ex: "English"), cada um com
+suas tarefas fixas (diárias, semanais) ou avulsas (com/sem data), checklist e streak.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+React + TypeScript + Vite, Zustand (estado), Supabase (Postgres + autenticação),
+Vitest (testes de domínio).
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Instale as dependências:
+   ```
+   npm install
+   ```
 
-## Expanding the Oxlint configuration
+2. Crie um projeto em [supabase.com](https://supabase.com) (free tier).
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
+3. No **SQL Editor** do projeto, rode o conteúdo de [supabase/schema.sql](supabase/schema.sql)
+   inteiro. Isso cria as tabelas `groups`, `tasks`, `completions` e as políticas de
+   Row Level Security (cada usuário só enxerga/altera os próprios dados).
 
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
+4. Em **Authentication → Sign In / Providers → Email**, desligue **"Confirm email"**
+   (recomendado para uso pessoal/entre amigos — sem isso, cada cadastro precisaria
+   confirmar por link de email antes do primeiro login).
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+5. Copie `.env.example` para `.env.local` e preencha com os dados do seu projeto
+   (**Project Settings → API**):
+   ```
+   cp .env.example .env.local
+   ```
+
+6. Rode o app:
+   ```
+   npm run dev
+   ```
+
+Cada pessoa que se cadastrar (email + senha) ganha seus próprios grupos e tarefas,
+com o grupo "English" de exemplo semeado automaticamente no primeiro login.
+
+## Scripts
+
+- `npm run dev` — servidor de desenvolvimento
+- `npm run build` — build de produção (`tsc -b && vite build`)
+- `npm test` — testes de domínio (Vitest)
+- `npm run lint` — oxlint
